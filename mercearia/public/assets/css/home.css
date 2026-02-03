@@ -1,0 +1,35 @@
+#cards {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    width: 40vw;
+    height: 50px;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 40px;
+}
+
+.card {
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px 30px;
+    border-radius: 15px;
+    width: 200px;
+}
+
+#first {
+    background-color: rgb(49, 49, 49);
+    color: white;
+}
+
+.calendario { 
+    bottom: 65px;
+}
+
+table {
+    width: 45vw;
+    height: 64vh;
+    position: relative;
+    bottom: 400px;
+}
