@@ -53,8 +53,6 @@ Essa organização ajuda a manter o código mais limpo, escalável e compreensí
 1. Clone o repositório:
    ```bash
    git clone https://github.com/oliviorui/gestao-mercearia.git
-````
-
 2. Configure um servidor local (XAMPP, WAMP ou similar)
 3. Importe o banco de dados MySQL (arquivos em `/database`)
 4. Ajuste as configurações de conexão com o banco
