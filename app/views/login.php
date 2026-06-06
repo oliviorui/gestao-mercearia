@@ -3,7 +3,7 @@ session_start();
 
 if (isset($_SESSION['id_usuario'])) {
     $redirectPage = ($_SESSION['tipo_usuario'] === 'admin') ? "admin/geral.php" : "operador/vendas.php";
-    header("Location: /mercearia/app/views/$redirectPage");
+    header("Location: /gestao-mercearia/app/views/$redirectPage");
     exit();
 }
 ?>

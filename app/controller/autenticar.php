@@ -130,9 +130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 
             if ($usuario) {
                 $redirectPage = $usuario['tipo_usuario'] === 'admin' ? "admin/geral.php" : "operador/vendas.php";
-                header("Location: /mercearia/app/views/$redirectPage");
+                header("Location: /gestao-mercearia/app/views/$redirectPage");
             } else {
-                header("Location: /mercearia/app/views/login.php");
+                header("Location: /gestao-mercearia/app/views/login.php");
             }
             exit;
 

@@ -33,7 +33,7 @@ Este sistema foi desenvolvido para automatizar o registro de vendas e o controle
 3. Inicie o servidor, crie e configure a base de dados:
    - Importe o arquivo `database/schema.sql` no MySQL.
    - Atualize as credenciais da banco no arquivo `init/add_admin.php`.
-4. Acesse o projeto via navegador, indo para `localhost/mercearia/public`.
+4. Acesse o projeto via navegador, indo para `localhost/gestao-mercearia/public`.
 
 ## 📌 Uso do Sistema
 ### 🔑 Login
