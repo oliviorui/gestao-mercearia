@@ -1,10 +1,8 @@
 <?php
-    session_start();
-    // Verifica se o usuário logado é do tipo 'operador'
-    if ($_SESSION['usuario']['tipo_usuario'] !== 'operador') {
-        header("Location: ../login.php");
-        exit();
-    }
+require_once __DIR__ . '/../../helpers/security.php';
+require_once __DIR__ . '/../../helpers/sidebar.php';
+require_auth(['admin', 'operador'], '../login.php');
+$flash = flash_get();
 ?>
 
 <!DOCTYPE html>
@@ -13,16 +11,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Banca Mahumane - Painel Vendas</title>
+    <title>Mercearia Mahumane - Vendas</title>
     <link rel="icon" href="../../../public/assets/images/favicon.png" type="image/x-icon">
-    
-    <link rel="stylesheet" href="../../../public/assets/css/geral.css">
-    <link rel="stylesheet" href="../../../public/assets/css/footer-vendedor.css">
-    <link rel="stylesheet" href="../../../public/assets/css/vendas.css">
-    <link rel="stylesheet" href="../../../public/assets/css/calendario.css">
+    <link rel="stylesheet" href="../../../public/assets/css/painel.css">
 
-    <script src="../../../public/assets/js/jquery.js"></script>
-    <script src="../../../public/assets/js/geral.js"></script>
+
+
+
+
+<script src="../../../public/assets/js/jquery.js"></script>
     <script src="../../../public/assets/js/calendario.js"></script>
     <script src="../../../public/assets/js/validate.js"></script>
     <script src="../../../public/assets/js/validacoes.js"></script>
@@ -40,28 +37,18 @@
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="perfil">
-            <img src="../../../public/assets/images/admin.png" alt="Admin">
-            <p><?php echo $_SESSION['usuario']['nome']; ?></p>
-        </div>
-        <hr>
-        <nav>
-            <a href="vendas.php" class="atual">Painel de vendas</a>
-            <a href="estoque.php">Consultar Estoque</a>
-        </nav>
-        
-        <form action="../../controller/autenticar.php" method="POST" id="logout">
-            <hr>
-            <input type="hidden" name="acao" value="logout">
-            <input type="image" src="../../../public/assets/images/icons/logout_24dp.svg" alt="Logout logo" id="img-logout" title="Terminar Sessão">
-        </form>
-    </div>
+    <?php render_sidebar('operador', 'vendas'); ?>
 
-    <div class="main-content">
+    <main class="main-content vendas-page vendas-page">
         <h2>Painel de Vendas</h2>
+        <?php if ($flash): ?>
+            <p style="padding:10px; margin:10px 0; border-radius:6px; background:#f3f5f7;">
+                <?php echo e($flash['message']); ?>
+            </p>
+        <?php endif; ?>
         <hr>
         <form action="../../controller/registar_venda.php" method="POST" id="vendas-form">
+            <?php echo csrf_field(); ?>
             <fieldset>
                 <legend>Registar venda</legend>
                 <table id="produtos-venda">
@@ -79,7 +66,7 @@
                             </select>
                         </td>
                         <td><input type="number" name="quantidade[]" class="quantidade" step="1"/></td>
-                        <td><input type="number" name="preco[]" class="preco" disabled/></td>
+                        <td><input type="number" name="preco[]" class="preco" readonly/></td>
                         <td><button type="button" class="remover-produto">Remover</button></td>
                     </tr>
                 </table>
@@ -100,7 +87,7 @@
             </div>
             <div class="dias" id="dias"></div>
         </div>
-    </div>
+    </main>
     <script>
         $(document).ready(function() {
             let produtosInfo = {}; // Objeto para armazenar id e preço dos produtos

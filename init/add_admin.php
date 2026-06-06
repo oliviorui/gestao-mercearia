@@ -8,9 +8,9 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $nome = 'Olívio Cumbe';
-    $email = 'oliviocumbe@email.com';
-    $senha = password_hash('#SenhaAdmin123', PASSWORD_BCRYPT);
+    $nome = 'Admin Demo';
+    $email = 'admin@example.com';
+    $senha = password_hash('#Password123', PASSWORD_BCRYPT);
     $tipo = 'admin';
     $data_cds = date("Y-m-d H:i:s");
 

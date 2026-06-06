@@ -1,5 +1,6 @@
 <?php
-require_once '../config/database.php';
+require_once __DIR__ . '/../helpers/security.php';
+require_auth('admin', '../views/login.php');
 
 class CrudUsuario {
     private $conn;
@@ -8,46 +9,75 @@ class CrudUsuario {
         $database = new Database();
         $this->conn = $database->conectar();
     }
-    // Função para registrar logs
-    private function registrarLog($idUsuario, $tipo, $descricao) {
+
+    private function registrarLog($tipo, $descricao): void {
         try {
-            $sql = "INSERT INTO logs (id_usuario, data_hora, tipo_actividade, descricao) 
+            $idUsuario = $_SESSION['usuario']['id_usuario'];
+            $sql = "INSERT INTO logs (id_usuario, data_hora, tipo_actividade, descricao)
                     VALUES (:id_usuario, NOW(), :tipo, :descricao)";
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':id_usuario', $idUsuario, PDO::PARAM_INT);
-            $stmt->bindParam(':tipo', $tipo, PDO::PARAM_STR);
-            $stmt->bindParam(':descricao', $descricao, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt->execute([
+                ':id_usuario' => $idUsuario,
+                ':tipo' => $tipo,
+                ':descricao' => $descricao,
+            ]);
         } catch (PDOException $e) {
             error_log("Erro ao registrar log: " . $e->getMessage());
         }
     }
 
-    public function cadastrarUsuario($nome, $email, $senha, $tipo_usuario) {
+    private function emailExiste($email, $ignorarId = null): bool {
+        $sql = "SELECT COUNT(*) FROM usuarios WHERE email = :email";
+        $params = [':email' => trim($email)];
+
+        if ($ignorarId !== null) {
+            $sql .= " AND id_usuario <> :id";
+            $params[':id'] = (int)$ignorarId;
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function validarDados($nome, $email, $tipo_usuario): bool {
+        return strlen(trim((string)$nome)) >= 3
+            && filter_var(trim((string)$email), FILTER_VALIDATE_EMAIL)
+            && in_array($tipo_usuario, ['admin', 'operador'], true);
+    }
+
+    public function cadastrarUsuario($nome, $email, $senha, $tipo_usuario): bool {
+        $nome = trim((string)$nome);
+        $email = trim((string)$email);
+
+        if (!$this->validarDados($nome, $email, $tipo_usuario) || strlen((string)$senha) < 4 || $this->emailExiste($email)) {
+            return false;
+        }
+
         try {
             $hashSenha = password_hash($senha, PASSWORD_DEFAULT);
-            $dataCadastro = date('Y-m-d H:i:s');  // Formato de data e hora padrão do MySQL
-    
-            $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario, data_cadastro) 
-                    VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario, data_cadastro)
+                    VALUES (?, ?, ?, ?, NOW())";
             $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$nome, $email, $hashSenha, $tipo_usuario, $dataCadastro]);
-    
-            // Recupera o ID do usuário recém-criado
-            $idUsuario = $this->conn->lastInsertId();
-            
-            // Registrar log de cadastro
-            $this->registrarLog($idUsuario, 'Cadastro de usuário', 'Usuário cadastrado no sistema.');
-            
+            $stmt->execute([$nome, $email, $hashSenha, $tipo_usuario]);
+
+            $this->registrarLog('Cadastro de usuário', 'Usuário cadastrado no sistema: ' . $nome);
             return true;
         } catch (PDOException $e) {
             error_log("Erro ao cadastrar usuário: " . $e->getMessage());
             return false;
         }
     }
-    
 
-    public function editarUsuario($id, $nome, $email, $tipo_usuario, $senha = null) {
+    public function editarUsuario($id, $nome, $email, $tipo_usuario, $senha = null): bool {
+        $id = (int)$id;
+        $nome = trim((string)$nome);
+        $email = trim((string)$email);
+
+        if ($id <= 0 || !$this->validarDados($nome, $email, $tipo_usuario) || $this->emailExiste($email, $id)) {
+            return false;
+        }
+
         try {
             if (!empty($senha)) {
                 $hashSenha = password_hash($senha, PASSWORD_DEFAULT);
@@ -60,9 +90,7 @@ class CrudUsuario {
                 $stmt->execute([$nome, $email, $tipo_usuario, $id]);
             }
 
-            // Registrar log de edição
-            $this->registrarLog($id, 'Edição de usuário', 'Dados do usuário editado no sistema.');
-            
+            $this->registrarLog('Edição de usuário', 'Dados do usuário editados no sistema: ID ' . $id);
             return true;
         } catch (PDOException $e) {
             error_log("Erro ao editar usuário: " . $e->getMessage());
@@ -70,40 +98,60 @@ class CrudUsuario {
         }
     }
 
-    public function excluirUsuario($id) {
+    public function excluirUsuario($id): bool {
+        $id = (int)$id;
+        if ($id <= 0) return false;
+
         try {
-            $sql = "DELETE FROM usuarios WHERE id_usuario = ?";
-            $stmt = $this->conn->prepare($sql);
+            $stmtTipo = $this->conn->prepare("SELECT tipo_usuario FROM usuarios WHERE id_usuario = ?");
+            $stmtTipo->execute([$id]);
+            $tipo = $stmtTipo->fetchColumn();
+
+            if ($tipo === 'admin') {
+                $totalAdmins = (int)$this->conn->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'admin'")->fetchColumn();
+                if ($totalAdmins <= 1) {
+                    return false;
+                }
+            }
+
+            if ($id === (int)($_SESSION['usuario']['id_usuario'] ?? 0)) {
+                return false;
+            }
+
+            $stmt = $this->conn->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
             $stmt->execute([$id]);
-    
-            // Registrar log de exclusão
-            $this->registrarLog($id, 'Exclusão de usuário', 'Usuário excluído do sistema.');
-            
+
+            $this->registrarLog('Exclusão de usuário', 'Usuário excluído do sistema: ID ' . $id);
             return true;
         } catch (PDOException $e) {
             error_log("Erro ao excluir usuário: " . $e->getMessage());
             return false;
         }
-    }       
+    }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_valid_csrf();
     $crud = new CrudUsuario();
+    $acao = $_POST['acao'] ?? '';
+    $ok = false;
 
-    if (isset($_POST['acao'])) {
-        $acao = $_POST['acao'];
-
-        if ($acao == 'cadastrar') {
-            $crud->cadastrarUsuario($_POST['nome'], $_POST['email'], $_POST['senha'], $_POST['tipo_usuario']);
-            header("Location: ../views/admin/usuarios.php");
-        } elseif ($acao == 'editar') {
-            $senha = !empty($_POST['senha']) ? $_POST['senha'] : null;
-            $crud->editarUsuario($_POST['id_usuario'], $_POST['nome'], $_POST['email'], $_POST['tipo_usuario'], $senha);
-            header("Location: ../views/admin/usuarios.php");
-        } elseif ($acao == 'excluir') {
-            $crud->excluirUsuario($_POST['id_usuario']);
-            header("Location: ../views/admin/usuarios.php");
-        }
+    if ($acao === 'cadastrar') {
+        $ok = $crud->cadastrarUsuario($_POST['nome'] ?? '', $_POST['email'] ?? '', $_POST['senha'] ?? '', $_POST['tipo_usuario'] ?? '');
+    } elseif ($acao === 'editar') {
+        $senha = !empty($_POST['senha']) ? $_POST['senha'] : null;
+        $ok = $crud->editarUsuario($_POST['id_usuario'] ?? 0, $_POST['nome'] ?? '', $_POST['email'] ?? '', $_POST['tipo_usuario'] ?? '', $senha);
+    } elseif ($acao === 'excluir') {
+        $ok = $crud->excluirUsuario($_POST['id_usuario'] ?? 0);
     }
+
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => $ok]);
+        exit();
+    }
+
+    header("Location: ../views/admin/usuarios.php");
+    exit();
 }
 ?>

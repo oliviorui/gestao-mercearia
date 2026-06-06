@@ -1,10 +1,7 @@
 <?php
-    session_start();
-    // Verifica se o usuário logado é do tipo 'admin'
-    if ($_SESSION['usuario']['tipo_usuario'] !== 'admin') {
-        header("Location: ../login.php");
-        exit();
-    }
+require_once __DIR__ . '/../../helpers/security.php';
+require_once __DIR__ . '/../../helpers/sidebar.php';
+require_auth('admin', '../login.php');
 ?>
 
 <!DOCTYPE html>
@@ -13,15 +10,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>Banca Mahumane - Actividades no Sistema</title>
+    <title>Mercearia Mahumane - Atividades do Sistema</title>
     <link rel="icon" href="../../../public/assets/images/favicon.png" type="image/x-icon">
+    <link rel="stylesheet" href="../../../public/assets/css/painel.css">
 
-    <link rel="stylesheet" href="../../../public/assets/css/geral.css">
-    <link rel="stylesheet" href="../../../public/assets/css/footer-admin.css">
-    <link rel="stylesheet" href="../../../public/assets/css/tabela.css">
 
-    <script src="../../../public/assets/js/jquery.js"></script>
-    <script src="../../../public/assets/js/geral.js"></script>
+
+
+<script src="../../../public/assets/js/jquery.js"></script>
 
     <style>
         .main-content {
@@ -30,28 +26,9 @@
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="perfil">
-            <img src="../../../public/assets/images/admin.png" alt="Admin">
-            <p><?php echo $_SESSION['usuario']['nome']; ?></p>
-        </div>
-        <hr>
-        <nav>
-            <a href="geral.php">Geral</a>
-            <a href="produtos.php">Cadastrar Produtos</a>
-            <a href="estoque.php">Consultar Estoque</a>
-            <a href="usuarios.php">Gerenciar Usuários</a>
-            <a href="logs.php" class="atual">Atividades no sistema</a>
-        </nav>
-        
-        <form action="../../controller/autenticar.php" method="POST" id="logout">
-            <hr>
-            <input type="hidden" name="acao" value="logout">
-            <input type="image" src="../../../public/assets/images/icons/logout_24dp.svg" alt="Logout logo" id="img-logout" title="Terminar Sessão">
-        </form>
-    </div>
+    <?php render_sidebar('admin', 'logs'); ?>
 
-    <div class="main-content">
+    <main class="main-content logs-page logs-page">
         <h2>Atividades no Sistema</h2>
         <hr>
         <table id="logs-table" border="1">
@@ -71,7 +48,7 @@
                 </tr>
             </tbody>
         </table>
-    </div>
+    </main>
     <script>
             $(document).ready(function() {
                 $.ajax({

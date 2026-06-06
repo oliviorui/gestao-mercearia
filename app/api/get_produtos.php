@@ -1,39 +1,31 @@
 <?php
-require_once '../config/database.php';
-session_start();  // Inicia a sessão
-
-header('Content-Type: application/json');
-
-$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
-
-// Verificar se o usuário está logado (por exemplo, verificando uma variável de sessão)
-if (!isset($_SESSION['usuario']) || empty($_SESSION['usuario']['id_usuario'])) {
-    echo json_encode(['error' => 'Usuário não está logado.']);
-    exit;  // Encerra a execução da API se o usuário não estiver logado
-}
+require_once __DIR__ . '/../helpers/security.php';
+require_api_auth(['admin', 'operador']);
 
 try {
     $database = new Database();
     $conn = $database->conectar();
 
-    // Consulta SQL com filtro
-    $sql_produtos = "SELECT id_produto, nome, categoria, preco, quantidade_estoque, descricao 
-                     FROM produtos 
-                     WHERE nome LIKE :searchTerm OR id_produto LIKE :searchTerm";
-    $stmt_produtos = $conn->prepare($sql_produtos);
-    $stmt_produtos->bindValue(':searchTerm', '%' . $searchTerm . '%');
-    $stmt_produtos->execute();
-
-    // Recuperar todos os produtos
-    $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
-
-    // Verificar se há produtos
-    if (count($produtos) > 0) {
-        echo json_encode($produtos);
-    } else {
-        echo json_encode(['message' => 'Nenhum produto encontrado']);
+    if (!$conn) {
+        throw new Exception('Não foi possível conectar à base de dados.');
     }
-} catch (PDOException $e) {
-    echo json_encode(['error' => 'Erro ao obter produtos: ' . $e->getMessage()]);
+
+    $searchTerm = trim($_GET['search'] ?? '');
+    $sql = "SELECT id_produto, nome, categoria, preco, quantidade_estoque, descricao
+            FROM produtos
+            WHERE nome LIKE :searchNome OR CAST(id_produto AS CHAR) LIKE :searchId
+            ORDER BY nome ASC";
+    $stmt = $conn->prepare($sql);
+    $like = '%' . $searchTerm . '%';
+    $stmt->execute([
+        ':searchNome' => $like,
+        ':searchId' => $like,
+    ]);
+
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Erro ao obter produtos.']);
+    error_log('Erro ao obter produtos: ' . $e->getMessage());
 }
 ?>

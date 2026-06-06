@@ -1,10 +1,7 @@
 <?php
-    session_start();
-    // Verifica se o usuário logado é do tipo 'operador'
-    if ($_SESSION['usuario']['tipo_usuario'] !== 'operador') {
-        header("Location: ../login.php");
-        exit();
-    }
+require_once __DIR__ . '/../../helpers/security.php';
+require_once __DIR__ . '/../../helpers/sidebar.php';
+require_auth(['admin', 'operador'], '../login.php');
 ?>
 
 <!DOCTYPE html>
@@ -13,36 +10,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>Banca Mahumane - Consulta de Estoque</title>
+    <title>Mercearia Mahumane - Estoque</title>
     <link rel="icon" href="../../../public/assets/images/favicon.png" type="image/x-icon">
-    
-    <link rel="stylesheet" href="../../../public/assets/css/geral.css">
-    <link rel="stylesheet" href="../../../public/assets/css/footer-vendedor.css">
-    <link rel="stylesheet" href="../../../public/assets/css/estoque.css">
+    <link rel="stylesheet" href="../../../public/assets/css/painel.css">
 
-    <script src="../../../public/assets/js/jquery.js"></script>
-    <script src="../../../public/assets/js/geral.js"></script>
+
+
+
+<script src="../../../public/assets/js/jquery.js"></script>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="perfil">
-            <img src="../../../public/assets/images/admin.png" alt="Admin">
-            <p><?php echo $_SESSION['usuario']['nome']; ?></p>
-        </div>
-        <hr>
-        <nav>
-            <a href="vendas.php">Painel de vendas</a>
-            <a href="estoque.php" class="atual">Consultar Estoque</a>
-        </nav>
-        
-        <form action="../../controller/autenticar.php" method="POST" id="logout">
-            <hr>
-            <input type="hidden" name="acao" value="logout">
-            <input type="image" src="../../../public/assets/images/icons/logout_24dp.svg" alt="Logout logo" id="img-logout" title="Terminar Sessão">
-        </form>
-    </div>
+    <?php render_sidebar('operador', 'estoque'); ?>
 
-    <div class="main-content">
+    <main class="main-content estoque-page estoque-page">
         <h2>Estoque Disponível</h2>
         <hr>
         <form action="#" id="search-form">
@@ -54,7 +34,7 @@
         <div class="itens">
             <!-- Lista de produtos será carregada aqui -->
         </div>
-    </div>
+    </main>
     <script>
         $(document).ready(function() {
             function carregarProdutos(filtro = '') {

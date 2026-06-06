@@ -1,0 +1,367 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+:root {
+    --blue: #0c6298;
+    --blue-hover: #0a5483;
+    --accent: #159ee8;
+    --bg: #f7f7f8;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #667085;
+    --border: #d9dde3;
+    --danger: #ef4444;
+    --sidebar: 250px;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar);
+    height: 100vh;
+    background: var(--blue);
+    color: #fff;
+    padding: 22px 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .perfil {
+    text-align: center;
+    padding-top: 2px;
+}
+
+.sidebar .perfil img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.sidebar .perfil p {
+    margin-top: 8px;
+    font-size: .95rem;
+}
+
+.sidebar hr {
+    width: calc(100% + 20px);
+    margin: 20px -10px;
+    border: 0;
+    border-top: 1px solid rgba(255,255,255,.35);
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 11px 16px;
+    margin-left: -10px;
+    border-radius: 0 14px 14px 0;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 650;
+    font-size: 1rem;
+    transition: .18s ease;
+}
+
+.sidebar a:hover,
+.sidebar a.atual {
+    background: #fff;
+    color: #667085;
+}
+
+#logout {
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0 8px;
+}
+
+#logout hr { display: none; }
+
+#img-logout {
+    width: 36px;
+    height: 36px;
+}
+
+.main-content {
+    margin-left: var(--sidebar);
+    min-height: 100vh;
+    padding: 42px clamp(28px, 4vw, 70px);
+    overflow-x: hidden;
+}
+
+.main-content h2 {
+    font-size: clamp(1.45rem, 1.8vw, 2rem);
+    line-height: 1.2;
+    text-transform: none;
+}
+
+.main-content hr {
+    margin: 18px 0 28px;
+    border: 0;
+    border-top: 1px solid #aeb4bb;
+}
+
+.page-shell {
+    width: 100%;
+    max-width: 1320px;
+}
+
+.content-grid {
+    width: 100%;
+    max-width: 1320px;
+    display: grid;
+    grid-template-columns: minmax(360px, 470px) minmax(0, 1fr);
+    gap: 34px;
+    align-items: start;
+}
+
+.form-card fieldset {
+    width: 100%;
+    min-height: 500px;
+    padding: 26px 32px 30px;
+    border: 2px solid #b7b7b7;
+    border-radius: 7px;
+    background: transparent;
+}
+
+legend {
+    font-size: 1.4rem;
+    padding: 0 10px;
+}
+
+.form-card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.form-card td {
+    padding: 8px 6px;
+}
+
+.form-card td:first-child {
+    width: 120px;
+}
+
+.form-card label {
+    white-space: nowrap;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #9b9b9b;
+    border-radius: 5px;
+    background: #fff;
+    outline: none;
+    font-size: .95rem;
+}
+
+textarea {
+    min-height: 110px;
+    resize: vertical;
+    margin-top: 12px;
+}
+
+button,
+#enviar,
+.editarBtn {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    border: 0;
+    border-radius: 6px;
+    padding: 11px 24px;
+    cursor: pointer;
+    transition: .18s ease;
+}
+
+button:hover,
+#enviar:hover,
+.editarBtn:hover {
+    background: #0b86c8;
+}
+
+#enviar {
+    display: block;
+    width: min(320px, 100%);
+    margin: 16px auto 0;
+}
+
+.editarBtn {
+    min-width: 130px;
+    margin: 12px 6px 0 0;
+}
+
+.list-card {
+    width: 100%;
+    min-width: 0;
+}
+
+.itens {
+    width: 100%;
+    max-height: calc(100vh - 170px);
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.itens ul {
+    list-style: none;
+    background: var(--card);
+    border-radius: 8px;
+    min-height: 58px;
+    padding: 14px 18px;
+    margin: 0 0 14px 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,.045);
+    display: grid;
+    gap: 14px;
+    align-items: center;
+    font-size: .95rem;
+}
+
+.produtos-page .itens ul {
+    grid-template-columns: minmax(130px,1.35fr) minmax(120px,1fr) minmax(90px,.7fr) minmax(55px,.45fr) minmax(130px,1.15fr) 58px;
+}
+
+.usuarios-page .itens ul {
+    grid-template-columns: minmax(140px,1.2fr) minmax(180px,1.6fr) minmax(80px,.7fr) 70px;
+}
+
+.estoque-page .itens ul {
+    grid-template-columns: 90px minmax(220px,1fr) 160px;
+}
+
+.itens li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.itens li:last-child {
+    white-space: nowrap;
+}
+
+.itens input[type="image"] {
+    width: 23px;
+    height: 23px;
+    margin-left: 7px;
+    vertical-align: middle;
+}
+
+#search-form {
+    max-width: 520px;
+    margin: -8px 0 24px auto;
+    display: flex;
+}
+
+#search-form input[type="text"] {
+    border: 2px solid var(--blue);
+    border-radius: 10px 0 0 10px;
+}
+
+#search-form button {
+    width: 52px;
+    border-radius: 0 10px 10px 0;
+    background: var(--blue);
+    padding: 0;
+}
+
+.data-table,
+table:not(.form-card table) {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+table:not(.form-card table) th,
+table:not(.form-card table) td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+table:not(.form-card table) th {
+    background: #015990;
+    color: white;
+}
+
+.vendas-page fieldset {
+    width: min(760px, 100%);
+    min-height: 500px;
+    max-height: calc(100vh - 170px);
+    overflow-y: auto;
+}
+
+.vendas-page input[type="number"] { max-width: 100px; }
+#adicionar-produto { margin-top: 20px; }
+
+.dashboard-page {
+    max-width: 1380px;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #6b9bba; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #287bb1; }
+
+@media (max-width: 1220px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+        max-width: 900px;
+    }
+    .itens { max-height: 520px; }
+}
+
+@media (max-width: 760px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 24px 16px;
+    }
+    .form-card fieldset {
+        min-height: auto;
+        padding: 22px 14px;
+    }
+    .form-card td,
+    .form-card td:first-child {
+        display: block;
+        width: 100%;
+        padding: 6px 0;
+    }
+    .produtos-page .itens ul,
+    .usuarios-page .itens ul,
+    .estoque-page .itens ul {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    #search-form {
+        max-width: none;
+        margin: 0 0 18px;
+    }
+}

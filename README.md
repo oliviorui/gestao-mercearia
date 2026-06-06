@@ -29,7 +29,7 @@ Este sistema foi desenvolvido para automatizar o registro de vendas e o controle
    ```sh
    git clone https://github.com/oliviorui/gestao-mercearia.git
    ```
-2. Coloque o diretório *mercearia* dentro do diretório do seu servidor local (ex: `htdocs` no XAMPP).
+2. Coloque o diretório *gestao-mercearia* dentro do diretório do seu servidor local (ex: `htdocs` no XAMPP).
 3. Inicie o servidor, crie e configure a base de dados:
    - Importe o arquivo `database/schema.sql` no MySQL.
    - Atualize as credenciais da banco no arquivo `init/add_admin.php`.

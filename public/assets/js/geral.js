@@ -1,9 +1,16 @@
 $(document).ready(function() {
-    $(".main-content").css("display", "none");
+    $('.main-content').hide().fadeIn(400);
 
-    $(".main-content").fadeIn(900);
+    $('a[href]').on('click', function(event) {
+        const href = $(this).attr('href');
 
-    $("a").click(function(event) {
-        $("body").fadeOut(900);
+        if (!href || href.startsWith('#') || href.startsWith('mailto:') || $(this).attr('target') === '_blank') {
+            return;
+        }
+
+        event.preventDefault();
+        $('body').fadeOut(200, function() {
+            window.location.href = href;
+        });
     });
 });

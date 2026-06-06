@@ -1,11 +1,14 @@
 <?php
-session_start();
+require_once __DIR__ . '/../helpers/security.php';
 
-if (isset($_SESSION['id_usuario'])) {
-    $redirectPage = ($_SESSION['tipo_usuario'] === 'admin') ? "admin/geral.php" : "operador/vendas.php";
-    header("Location: /gestao-mercearia/app/views/$redirectPage");
+if (is_authenticated()) {
+    $tipo = $_SESSION['usuario']['tipo_usuario'] ?? '';
+    $redirectPage = ($tipo === 'admin') ? "admin/geral.php" : "operador/vendas.php";
+    header("Location: " . app_base_path() . "/app/views/{$redirectPage}");
     exit();
 }
+
+$flash = flash_get();
 ?>
 
 <!DOCTYPE html>
@@ -44,6 +47,8 @@ if (isset($_SESSION['id_usuario'])) {
 
         <form action="../controller/autenticar.php" method="POST" id="login">
             <input type="hidden" name="acao" value="login">
+            <?php echo csrf_field(); ?>
+            <?php if ($flash): ?><p style="color:red; text-align:center;"><?php echo e($flash['message']); ?></p><?php endif; ?>
             <label>
                 <input type="email" class="campos" placeholder="E-mail" id="email" name="email">
             </label>

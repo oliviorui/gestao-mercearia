@@ -1,51 +1,85 @@
 <?php
 require_once '../config/database.php';
-session_start();  // Inicia a sessão
+require_once '../helpers/security.php';
 
-header('Content-Type: application/json');
-
-// Verificar se o usuário está logado (por exemplo, verificando uma variável de sessão)
-if (!isset($_SESSION['usuario']) || empty($_SESSION['usuario']['id_usuario'])) {
-    echo json_encode(['error' => 'Usuário não está logado.']);
-    exit;  // Encerra a execução da API se o usuário não estiver logado
-}
-
-// Verifica se o usuário logado é do tipo 'admin'
-if ($_SESSION['usuario']['tipo_usuario'] !== 'admin') {
-    echo json_encode(['error' => 'Acesso restrito. Somente administradores podem acessar esses dados.']);
-    exit;  // Encerra a execução se o usuário não for admin
-}
-
+require_api_auth('admin');
 
 try {
     $database = new Database();
     $conn = $database->conectar();
 
-    // Consultar o total de vendas
-    $sql_total_vendas = "SELECT COUNT(id_venda) AS total_vendas FROM vendas";
-    $stmt_total_vendas = $conn->prepare($sql_total_vendas);
-    $stmt_total_vendas->execute();
-    $total_vendas = $stmt_total_vendas->fetch(PDO::FETCH_ASSOC)['total_vendas'];
+    $totais = [];
 
-    // Consultar o número de produtos no estoque (quantidade_estoque > 0)
-    $sql_produtos_estoque = "SELECT COUNT(id_produto) AS produtos_estoque FROM produtos WHERE quantidade_estoque > 10";
-    $stmt_produtos_estoque = $conn->prepare($sql_produtos_estoque);
-    $stmt_produtos_estoque->execute();
-    $produtos_estoque = $stmt_produtos_estoque->fetch(PDO::FETCH_ASSOC)['produtos_estoque'];
+    $totais['total_vendas'] = (int) $conn->query("SELECT COUNT(id_venda) FROM vendas")->fetchColumn();
+    $totais['receita_total'] = (float) $conn->query("SELECT COALESCE(SUM(valor_total), 0) FROM vendas")->fetchColumn();
+    $totais['vendas_hoje'] = (int) $conn->query("SELECT COUNT(id_venda) FROM vendas WHERE DATE(data_venda) = CURDATE()")->fetchColumn();
+    $totais['receita_hoje'] = (float) $conn->query("SELECT COALESCE(SUM(valor_total), 0) FROM vendas WHERE DATE(data_venda) = CURDATE()")->fetchColumn();
+    $totais['vendas_mes'] = (int) $conn->query("SELECT COUNT(id_venda) FROM vendas WHERE YEAR(data_venda) = YEAR(CURDATE()) AND MONTH(data_venda) = MONTH(CURDATE())")->fetchColumn();
+    $totais['receita_mes'] = (float) $conn->query("SELECT COALESCE(SUM(valor_total), 0) FROM vendas WHERE YEAR(data_venda) = YEAR(CURDATE()) AND MONTH(data_venda) = MONTH(CURDATE())")->fetchColumn();
+    $totais['produtos_estoque'] = (int) $conn->query("SELECT COUNT(id_produto) FROM produtos WHERE quantidade_estoque > 0")->fetchColumn();
+    $totais['produtos_baixo_estoque'] = (int) $conn->query("SELECT COUNT(id_produto) FROM produtos WHERE quantidade_estoque > 0 AND quantidade_estoque <= 10")->fetchColumn();
+    $totais['produtos_fora_estoque'] = (int) $conn->query("SELECT COUNT(id_produto) FROM produtos WHERE quantidade_estoque = 0")->fetchColumn();
 
-    // Consultar o número de produtos fora do estoque (quantidade_estoque = 0)
-    $sql_produtos_fora_estoque = "SELECT COUNT(id_produto) AS produtos_fora_estoque FROM produtos WHERE quantidade_estoque <= 10";
-    $stmt_produtos_fora_estoque = $conn->prepare($sql_produtos_fora_estoque);
-    $stmt_produtos_fora_estoque->execute();
-    $produtos_fora_estoque = $stmt_produtos_fora_estoque->fetch(PDO::FETCH_ASSOC)['produtos_fora_estoque'];
+    $stmt = $conn->prepare("SELECT v.id_venda, v.data_venda, v.valor_total, COALESCE(u.nome, 'Usuário removido') AS usuario
+        FROM vendas v
+        LEFT JOIN usuarios u ON v.id_usuario = u.id_usuario
+        ORDER BY v.data_venda DESC, v.id_venda DESC
+        LIMIT 8");
+    $stmt->execute();
+    $ultimas_vendas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Retornar os dados em formato JSON
+    $stmt = $conn->prepare("SELECT p.nome, SUM(iv.quantidade) AS quantidade, SUM(iv.quantidade * iv.preco_unitario) AS total
+        FROM itens_venda iv
+        INNER JOIN produtos p ON iv.id_produto = p.id_produto
+        GROUP BY p.id_produto, p.nome
+        ORDER BY quantidade DESC, total DESC
+        LIMIT 5");
+    $stmt->execute();
+    $top_produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $conn->prepare("SELECT DATE(data_venda) AS dia, COUNT(id_venda) AS vendas, COALESCE(SUM(valor_total), 0) AS receita
+        FROM vendas
+        WHERE DATE(data_venda) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+        GROUP BY DATE(data_venda)
+        ORDER BY dia ASC");
+    $stmt->execute();
+    $vendas_7_dias_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $mapa = [];
+    foreach ($vendas_7_dias_raw as $linha) {
+        $mapa[$linha['dia']] = $linha;
+    }
+
+    $vendas_7_dias = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $dia = date('Y-m-d', strtotime("-$i days"));
+        $vendas_7_dias[] = [
+            'dia' => $dia,
+            'vendas' => isset($mapa[$dia]) ? (int) $mapa[$dia]['vendas'] : 0,
+            'receita' => isset($mapa[$dia]) ? (float) $mapa[$dia]['receita'] : 0,
+        ];
+    }
+
+    $stmt = $conn->prepare("SELECT id_produto, nome, categoria, quantidade_estoque
+        FROM produtos
+        WHERE quantidade_estoque <= 10
+        ORDER BY quantidade_estoque ASC, nome ASC
+        LIMIT 8");
+    $stmt->execute();
+    $estoque_critico = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
-        'total_vendas' => $total_vendas,
-        'produtos_estoque' => $produtos_estoque,
-        'produtos_fora_estoque' => $produtos_fora_estoque
-    ]);
+        'totais' => $totais,
+        'ultimas_vendas' => $ultimas_vendas,
+        'top_produtos' => $top_produtos,
+        'vendas_7_dias' => $vendas_7_dias,
+        'estoque_critico' => $estoque_critico,
+    ], JSON_UNESCAPED_UNICODE);
 } catch (PDOException $e) {
-    echo json_encode(['error' => 'Erro ao buscar dados do painel: ' . $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Erro ao buscar dados do painel.',
+        'details' => $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
 }
 ?>
